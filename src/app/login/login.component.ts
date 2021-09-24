@@ -5,19 +5,22 @@ import { TokenStorageService } from '../_services/token-storage.service';
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  styleUrls: ['./login.component.css'],
 })
 export class LoginComponent implements OnInit {
   form: any = {
     username: null,
-    password: null
+    password: null,
   };
   isLoggedIn = false;
   isLoginFailed = false;
   errorMessage = '';
   roles: string[] = [];
 
-  constructor(private authService: AuthService, private tokenStorage: TokenStorageService) { }
+  constructor(
+    private authService: AuthService,
+    private tokenStorage: TokenStorageService
+  ) {}
 
   ngOnInit(): void {
     if (this.tokenStorage.getToken()) {
@@ -30,7 +33,7 @@ export class LoginComponent implements OnInit {
     const { username, password } = this.form;
 
     this.authService.login(username, password).subscribe(
-      data => {
+      (data) => {
         this.tokenStorage.saveToken(data.accessToken);
         this.tokenStorage.saveUser(data);
 
@@ -39,8 +42,16 @@ export class LoginComponent implements OnInit {
         this.roles = this.tokenStorage.getUser().roles;
         this.reloadPage();
       },
-      err => {
-        this.errorMessage = err.error.message;
+      (err) => {
+        switch (err.status) {
+          case 401:
+            this.errorMessage = 'Credenciales inválidas';
+            break;
+
+          default:
+            this.errorMessage = 'Error inesperado';
+            break;
+        }
         this.isLoginFailed = true;
       }
     );
